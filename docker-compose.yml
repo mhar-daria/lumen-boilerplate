@@ -1,0 +1,67 @@
+version: "3.8"
+services:
+  # database
+  db:
+    container_name: api-db
+    image: postgres
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DATABASE=lumen
+      - POSTGRES_USERNAME=lumen
+      - POSTGRES_PASSWORD=password
+    networks:
+      - api-boilerplate-network
+    volumes:
+      - db:/var/lib/postgresql/data
+
+  # api
+  api:
+    container_name: api-boilerplate
+    build:
+      context: .
+      dockerfile: .docker/Dockerfile
+    image: php:7.3-fpm
+    working_dir: /usr/share/nginx/api
+    environment:
+      - APP_ENV=development
+    volumes:
+      - ./:/usr/share/nginx/api
+      - ./.docker/php/local.ini/:/usr/local/etc/php/conf.d/local.ini
+    env_file:
+      - .env
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    networks:
+      - api-boilerplate-network
+
+  # nginx
+  webserver:
+    container_name: api-webserver
+    image: nginx:alpine
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    volumes:
+      - ./:/usr/share/nginx/api/
+      - ./.docker/nginx/conf.d/:/etc/nginx/conf.d/
+    networks:
+      - api-boilerplate-network
+    ports:
+      - "7777:7777"
+    depends_on:
+      - "db"
+      - "api"
+
+# docker networks
+networks:
+  api-boilerplate-network:
+    driver: bridge
+
+# volumes
+volumes:
+  db:

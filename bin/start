@@ -1,0 +1,28 @@
+#!/bin/bash
+source $PWD/bin/bash.sh
+
+ENVS="development production"
+ENV_SELECTED='development'
+
+select env in $ENVS
+do
+  ENV_SELECTED="$env"
+  break
+done
+
+execute yes | cp -f ".env.$ENV_SELECTED" ".env"
+
+case $ENV_SELECTED in
+  development )
+    execute docker-compose down && \
+            docker-compose \
+              -f "docker-compose.yml" \
+            up
+  ;;
+  production )
+    execute docker-compose down && \
+            docker-compose \
+              -f "docker-compose.production.yml" \
+            up
+  ;;
+esac
